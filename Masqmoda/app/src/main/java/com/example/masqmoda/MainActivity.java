@@ -3,10 +3,15 @@ package com.example.masqmoda;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Bundle;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new MyWebViewClient());
         webView.getSettings().setJavaScriptEnabled(true);
         webView.loadUrl(initialUrl);
+
     }
 
     @Override
@@ -44,6 +50,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+public class MyWebViewClient extends WebViewClient {
 
+    @Override
+    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+        // Permite todos los errores SSL
+        handler.proceed();
+    }
+
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        if (error != null && error.getErrorCode() == WebViewClient.ERROR_UNSUPPORTED_SCHEME) {
+            // Aquí puedes manejar el error como desees, por ejemplo, mostrando un Toast
+            webView.loadUrl(initialUrl);
+            Toast.makeText(MainActivity.this, "Error al intentar cargar la página", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
 }
 
