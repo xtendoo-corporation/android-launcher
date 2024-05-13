@@ -19,6 +19,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
@@ -52,6 +54,11 @@ public class MainActivity extends AppCompatActivity {
 
 public class MyWebViewClient extends WebViewClient {
 
+    ArrayList<String> direcciones = new ArrayList<>();
+
+
+
+
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         // Permite todos los errores SSL
@@ -61,11 +68,45 @@ public class MyWebViewClient extends WebViewClient {
     @Override
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
         super.onReceivedError(view, request, error);
-        if (error != null && error.getErrorCode() == WebViewClient.ERROR_UNSUPPORTED_SCHEME) {
-            // Aquí puedes manejar el error como desees, por ejemplo, mostrando un Toast
-            webView.loadUrl(initialUrl);
-            Toast.makeText(MainActivity.this, "Error al intentar cargar la página", Toast.LENGTH_SHORT).show();
+//        if (error != null && error.getErrorCode() == WebViewClient.ERROR_UNSUPPORTED_SCHEME) {
+//            // Aquí puedes manejar el error como desees, por ejemplo, mostrando un Toast
+//            webView.loadUrl(initialUrl);
+//            Toast.makeText(MainActivity.this, "Error al intentar cargar la página", Toast.LENGTH_SHORT).show();
+//        }
+    }
+
+    @Override
+    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+        if (direcciones.isEmpty()){
+            // Agregar elementos al ArrayList
+            direcciones.add("instagram.com");
+            direcciones.add("facebook.com");
+            direcciones.add("tiktok.com");
+            direcciones.add("stripe.com");
+            direcciones.add("checkout.link.com");
+            direcciones.add("tel:");
+            direcciones.add("mailto:");
+
         }
+        Uri url = request.getUrl();
+        for (int x=0 ; x < direcciones.size(); x++){
+            if (url.toString().contains(direcciones.get(x))){
+                if (url.toString().contains("tel:")){
+                    Intent intent = new Intent(Intent.ACTION_DIAL, url);
+                    view.getContext().startActivity(intent);
+                }
+                if (url.toString().contains("mailto:")){
+                    Intent intent = new Intent(Intent.ACTION_SENDTO, url);
+                    view.getContext().startActivity(intent);
+                }
+                else {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, url);
+                    view.getContext().startActivity(intent);
+                }
+                return true; // Indicamos que la navegación debe ser manejada por el WebView
+            }
+        }
+        return false; // Dejamos que el WebView maneje la navegación
     }
 }
 }
