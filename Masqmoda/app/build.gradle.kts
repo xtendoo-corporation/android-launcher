@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.masqmoda"
+    namespace = "com.xtendoo.masqmoda"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.masqmoda"
+        applicationId = "com.xtendoo.masqmoda"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
