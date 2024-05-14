@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
@@ -22,6 +23,7 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.widget.Toast;
@@ -36,13 +38,19 @@ public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
     private String initialUrl = "https://masqmoda.net";
-    private static final int PERMISSION_REQUEST_CODE = 123;
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Verificar si los permisos de notificación están otorgados
+        if (!checkNotificationPermissions()) {
+            // Si los permisos no están otorgados, mostrar el diálogo de solicitud de permisos
+            requestNotificationPermissions();
+        }
 
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(new OnCompleteListener<String>() {
@@ -151,5 +159,57 @@ public class MyWebViewClient extends WebViewClient {
         return false; // Dejamos que el WebView maneje la navegación
     }
 }
+
+        //Permisos de notificaciones
+        // Método para verificar si los permisos de notificación están otorgados
+        private boolean checkNotificationPermissions() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                return NotificationManagerCompat.from(this).areNotificationsEnabled();
+            } else {
+                // No es posible verificar si los permisos están otorgados en versiones anteriores a Oreo
+                return true;
+            }
+        }
+
+    // Método para solicitar permisos de notificación
+    private void requestNotificationPermissions() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Permisos de notificación")
+                .setMessage("Esta aplicación requiere permisos de notificación para funcionar correctamente. " +
+                        "Por favor, habilite los permisos en la configuración de la aplicación.")
+                .setPositiveButton("Ir a configuración", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Ir a la configuración de la aplicación para habilitar los permisos de notificación
+                        startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", getPackageName(), null)));
+                    }
+                })
+                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // El usuario canceló la solicitud de permisos, puedes manejarlo según sea necesario
+                        Toast.makeText(MainActivity.this, "Los permisos de notificación no están habilitados. La aplicación puede no funcionar correctamente.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    // Método para manejar la respuesta de la solicitud de permisos
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            // Verificar si el usuario otorgó los permisos de notificación
+            if (checkNotificationPermissions()) {
+                // Permiso concedido, puedes continuar con la lógica de tu aplicación
+                Toast.makeText(this, "Permisos de notificación concedidos.", Toast.LENGTH_SHORT).show();
+            } else {
+                // Permiso denegado, puedes mostrar un mensaje al usuario informándole sobre la importancia de los permisos
+                Toast.makeText(this, "Los permisos de notificación no están habilitados. La aplicación puede no funcionar correctamente.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 }
 
