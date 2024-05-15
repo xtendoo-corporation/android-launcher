@@ -34,6 +34,12 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import android.util.Log;
+import java.util.HashMap;
+import java.util.Map;
+
+
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
@@ -211,5 +217,6 @@ public class MyWebViewClient extends WebViewClient {
             }
         }
     }
+
 }
 

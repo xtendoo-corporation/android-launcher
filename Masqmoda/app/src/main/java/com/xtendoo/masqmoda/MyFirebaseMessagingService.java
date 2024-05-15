@@ -10,4 +10,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService{
         // Procesar la notificación recibida
         // remoteMessage contiene información sobre la notificación
     }
+
+    @Override
+    public void onNewToken(String token) {
+        super.onNewToken(token);
+        // Guarda el nuevo token en Firestore
+        TokenManager.guardarTokenEnFirestore(token);
+    }
 }
