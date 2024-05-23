@@ -6,8 +6,11 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.http.SslError;
@@ -15,6 +18,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -25,11 +29,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import android.Manifest;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
@@ -45,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private String initialUrl = "https://masqmoda.net";
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
+    private BroadcastReceiver mMessageReceiver;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -69,21 +77,76 @@ public class MainActivity extends AppCompatActivity {
 
                         // Get new FCM registration token
                         String token = task.getResult();
-
                         // Log and toast
                         String msg = getString(R.string.msg_token_fmt, token);
                         Log.d(TAG, msg);
-//                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
 
         webView = findViewById(R.id.webView);
         webView.setWebViewClient(new MyWebViewClient());
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl(initialUrl);
+//      webView.loadUrl(initialUrl);
+//      Obtener la URL de redirección del Intent
+        String redirectUrl = getIntent().getStringExtra("redirect_url");
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            webView.loadUrl(redirectUrl);
+        } else {
+            webView.loadUrl(initialUrl);
+        }
 
+        // Inicializar el BroadcastReceiver
+        mMessageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String title = intent.getStringExtra("title");
+                String body = intent.getStringExtra("body");
+                String imageUrl = intent.getStringExtra("image");
+                String redirectUrl = intent.getStringExtra("redirect_url");
+
+                Log.d("MainActivity", "Received message: " + title + ", " + body + ", " + imageUrl + ", " + redirectUrl);
+
+                // Mostrar la notificación dentro de la aplicación como Snackbar
+                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), title + ": " + body, Snackbar.LENGTH_LONG)
+                        .setAction("Ver", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                                    webView.loadUrl(redirectUrl);
+                                }
+                            }
+                        });
+                // Puedes cambiar la duración en milisegundos
+                int duracionPersonalizada = 7500; // 10 segundos
+                snackbar.setDuration(duracionPersonalizada);
+                snackbar.show();
+            }
+        };
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyFirebaseMessagingServiceMessage"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+
+        // Obtener la URL de redirección del nuevo Intent
+        String redirectUrl = intent.getStringExtra("redirect_url");
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            webView.loadUrl(redirectUrl);
+        }
+    }
     @Override
     public void onBackPressed() {
         // Verifica si el WebView puede retroceder en la historia
@@ -97,20 +160,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-public class MyWebViewClient extends WebViewClient {
+    public class MyWebViewClient extends WebViewClient {
 
-    ArrayList<String> direcciones = new ArrayList<>();
-    private MainActivity activity; // MainActivity es tu actividad que contiene el WebView
+        ArrayList<String> direcciones = new ArrayList<>();
+        private MainActivity activity; // MainActivity es tu actividad que contiene el WebView
 
-    @Override
-    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-        // Permite todos los errores SSL
-        handler.proceed();
-    }
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            // Permite todos los errores SSL
+            handler.proceed();
+        }
 
-    @Override
-    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-        super.onReceivedError(view, errorCode, description, failingUrl);
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            super.onReceivedError(view, errorCode, description, failingUrl);
 //        if (errorCode == WebViewClient.ERROR_BAD_URL) {
             // Construir el cuadro de diálogo
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -129,53 +192,53 @@ public class MyWebViewClient extends WebViewClient {
             AlertDialog dialog = builder.create();
             dialog.show();
 //        }
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if (direcciones.isEmpty()){
+                // Agregar elementos al ArrayList
+                direcciones.add("instagram.com");
+                direcciones.add("facebook.com");
+                direcciones.add("tiktok.com");
+                direcciones.add("stripe.com");
+                direcciones.add("checkout.link.com");
+                direcciones.add("tel:");
+                direcciones.add("mailto:");
+
+            }
+            Uri url = request.getUrl();
+            for (int x=0 ; x < direcciones.size(); x++){
+                if (url.toString().contains(direcciones.get(x))){
+                    if (url.toString().contains("tel:")){
+                        Intent intent = new Intent(Intent.ACTION_DIAL, url);
+                        view.getContext().startActivity(intent);
+                    }
+                    if (url.toString().contains("mailto:")){
+                        Intent intent = new Intent(Intent.ACTION_SENDTO, url);
+                        view.getContext().startActivity(intent);
+                    }
+                    else {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, url);
+                        view.getContext().startActivity(intent);
+                    }
+                    return true; // Indicamos que la navegación debe ser manejada por el WebView
+                }
+            }
+            return false; // Dejamos que el WebView maneje la navegación
+        }
     }
 
-    @Override
-    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-        if (direcciones.isEmpty()){
-            // Agregar elementos al ArrayList
-            direcciones.add("instagram.com");
-            direcciones.add("facebook.com");
-            direcciones.add("tiktok.com");
-            direcciones.add("stripe.com");
-            direcciones.add("checkout.link.com");
-            direcciones.add("tel:");
-            direcciones.add("mailto:");
-
+    //Permisos de notificaciones
+    // Método para verificar si los permisos de notificación están otorgados
+    private boolean checkNotificationPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return NotificationManagerCompat.from(this).areNotificationsEnabled();
+        } else {
+            // No es posible verificar si los permisos están otorgados en versiones anteriores a Oreo
+            return true;
         }
-        Uri url = request.getUrl();
-        for (int x=0 ; x < direcciones.size(); x++){
-            if (url.toString().contains(direcciones.get(x))){
-                if (url.toString().contains("tel:")){
-                    Intent intent = new Intent(Intent.ACTION_DIAL, url);
-                    view.getContext().startActivity(intent);
-                }
-                if (url.toString().contains("mailto:")){
-                    Intent intent = new Intent(Intent.ACTION_SENDTO, url);
-                    view.getContext().startActivity(intent);
-                }
-                else {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, url);
-                    view.getContext().startActivity(intent);
-                }
-                return true; // Indicamos que la navegación debe ser manejada por el WebView
-            }
-        }
-        return false; // Dejamos que el WebView maneje la navegación
     }
-}
-
-        //Permisos de notificaciones
-        // Método para verificar si los permisos de notificación están otorgados
-        private boolean checkNotificationPermissions() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                return NotificationManagerCompat.from(this).areNotificationsEnabled();
-            } else {
-                // No es posible verificar si los permisos están otorgados en versiones anteriores a Oreo
-                return true;
-            }
-        }
 
     // Método para solicitar permisos de notificación
     private void requestNotificationPermissions() {
@@ -219,4 +282,3 @@ public class MyWebViewClient extends WebViewClient {
     }
 
 }
-
