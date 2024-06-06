@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private String initialUrl = "https://masqmoda.net";
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
     private BroadcastReceiver mMessageReceiver;
-    private static final String TAG = "SSL_ERROR";
+//    private static final String TAG = "SSL_ERROR";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -174,65 +174,65 @@ public class MainActivity extends AppCompatActivity {
 //            handler.proceed();
 //        }
 
-//        @Override
-//        public void onReceivedSslError(WebView view, final SslErrorHandler handler, SslError error) {
-//            // Registrar el error SSL
-//            logSslError(error);
-//
-//            // Muestra un diálogo de advertencia al usuario
-//            AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-//            builder.setMessage("Hay un problema con el certificado de seguridad del sitio. ¿Deseas continuar de todos modos?");
-//
-//            builder.setPositiveButton("Continuar", new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialog, int which) {
-//                    // Permitir que el usuario decida continuar
-//                    handler.proceed();
-//                }
-//            });
-//
-//            builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialog, int which) {
-//                    // Cancelar la carga de la página
-//                    handler.cancel();
-//                }
-//            });
-//
-//            builder.create().show();
-//        }
-//
-//        private void logSslError(SslError error) {
-//            String errorMessage;
-//            switch (error.getPrimaryError()) {
-//                case SslError.SSL_UNTRUSTED:
-//                    errorMessage = "El certificado no es de confianza.";
-//                    break;
-//                case SslError.SSL_EXPIRED:
-//                    errorMessage = "El certificado ha expirado.";
-//                    break;
-//                case SslError.SSL_IDMISMATCH:
-//                    errorMessage = "El nombre del certificado no coincide.";
-//                    break;
-//                case SslError.SSL_NOTYETVALID:
-//                    errorMessage = "El certificado aún no es válido.";
-//                    break;
-//                default:
-//                    errorMessage = "Error SSL desconocido.";
-//                    break;
-//            }
-//            Log.e(TAG, "Error SSL: " + errorMessage);
-//            Log.e(TAG, "URL: " + error.getUrl());
-//
-//            // Obtener información del certificado
-//            SslCertificate sslCertificate = error.getCertificate();
-//            if (sslCertificate != null) {
-//                SslCertificate.DName issuedTo = sslCertificate.getIssuedTo();
-//                SslCertificate.DName issuedBy = sslCertificate.getIssuedBy();
-//                Log.e(TAG, "Issued to: " + issuedTo.getDName());
-//                Log.e(TAG, "Issued by: " + issuedBy.getDName());
-//            }
-//        }
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            // Registrar el error SSL
+            logSslError(error);
+
+            // Muestra un diálogo de advertencia al usuario
+            AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
+            builder.setMessage("Hay un problema con el certificado de seguridad del sitio. ¿Deseas continuar de todos modos?");
+
+            builder.setPositiveButton("Continuar", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Permitir que el usuario decida continuar
+                    handler.proceed();
+                }
+            });
+
+            builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Cancelar la carga de la página
+                    handler.cancel();
+                }
+            });
+
+            builder.create().show();
+        }
+
+        private void logSslError(SslError error) {
+            String errorMessage;
+            switch (error.getPrimaryError()) {
+                case SslError.SSL_UNTRUSTED:
+                    errorMessage = "El certificado no es de confianza.";
+                    break;
+                case SslError.SSL_EXPIRED:
+                    errorMessage = "El certificado ha expirado.";
+                    break;
+                case SslError.SSL_IDMISMATCH:
+                    errorMessage = "El nombre del certificado no coincide.";
+                    break;
+                case SslError.SSL_NOTYETVALID:
+                    errorMessage = "El certificado aún no es válido.";
+                    break;
+                default:
+                    errorMessage = "Error SSL desconocido.";
+                    break;
+            }
+            Log.e(TAG, "Error SSL: " + errorMessage);
+            Log.e(TAG, "URL: " + error.getUrl());
+
+            // Obtener información del certificado
+            SslCertificate sslCertificate = error.getCertificate();
+            if (sslCertificate != null) {
+                SslCertificate.DName issuedTo = sslCertificate.getIssuedTo();
+                SslCertificate.DName issuedBy = sslCertificate.getIssuedBy();
+                Log.e(TAG, "Issued to: " + issuedTo.getDName());
+                Log.e(TAG, "Issued by: " + issuedBy.getDName());
+            }
+        }
 
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
