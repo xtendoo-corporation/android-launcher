@@ -87,16 +87,15 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         webView = findViewById(R.id.webView);
-        webView.setWebViewClient(new MyWebViewClient());
-        webView.getSettings().setJavaScriptEnabled(true);
-//      webView.loadUrl(initialUrl);
-//      Obtener la URL de redirección del Intent
-        String redirectUrl = getIntent().getStringExtra("redirect_url");
-        if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            webView.loadUrl(redirectUrl);
-        } else {
-            webView.loadUrl(initialUrl);
-        }
+        configureWebView();
+//        webView.setWebViewClient(new MyWebViewClient());
+//        webView.getSettings().setJavaScriptEnabled(true);
+//        String redirectUrl = getIntent().getStringExtra("redirect_url");
+//        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+//            webView.loadUrl(redirectUrl);
+//        } else {
+//            webView.loadUrl(initialUrl);
+//        }
 
         // Inicializar el BroadcastReceiver
         mMessageReceiver = new BroadcastReceiver() {
@@ -127,6 +126,34 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    private void configureWebView() {
+        webView.setWebViewClient(new WebViewClient());
+        webView.getSettings().setJavaScriptEnabled(false); // Desactiva JavaScript si no es necesario
+
+        // Configura otras opciones de seguridad
+        webView.getSettings().setAllowFileAccess(false);
+        webView.getSettings().setAllowContentAccess(false);
+        webView.getSettings().setDomStorageEnabled(false);
+
+        String redirectUrl = getIntent().getStringExtra("redirect_url");
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            loadUrlSafely(redirectUrl);
+        } else {
+            // Carga una URL de forma segura
+            loadUrlSafely(initialUrl);
+        }
+    }
+
+    private void loadUrlSafely(String url) {
+        // Sanitiza la URL antes de cargarla
+        if (url != null && (url.startsWith("https://") || url.startsWith("http://"))) {
+            webView.loadUrl(url);
+        } else {
+            // Maneja el caso de una URL no válida
+            // Por ejemplo, muestra un mensaje de error al usuario
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -147,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
         // Obtener la URL de redirección del nuevo Intent
         String redirectUrl = intent.getStringExtra("redirect_url");
         if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            webView.loadUrl(redirectUrl);
+            loadUrlSafely(redirectUrl);
         }
     }
     @Override
