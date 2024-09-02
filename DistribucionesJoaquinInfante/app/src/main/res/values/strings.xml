@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">DJI</string>
+    <string name="msg_token_fmt">FCM Token: %s</string>
+    <string name="default_notification_channel_id">my_default_channel</string>
+    <string name="default_notification_channel_name">My Default Channel</string>
+</resources>
