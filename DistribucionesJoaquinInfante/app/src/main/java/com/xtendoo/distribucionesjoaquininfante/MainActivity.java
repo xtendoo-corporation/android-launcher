@@ -21,6 +21,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -127,30 +128,50 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void configureWebView() {
-        webView.setWebViewClient(new WebViewClient());
-        webView.getSettings().setJavaScriptEnabled(false); // Desactiva JavaScript si no es necesario
+        // Configura un WebViewClient personalizado
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                // Permite cargar solo URLs que comiencen con el dominio seguro
+                if (url.startsWith("https://distribucionesjoaquininfante.es/")) {
+                    return false; // Permitir que el WebView cargue la URL
+                } else {
+                    // Bloquea la carga de URLs no seguras y muestra un mensaje
+                    Toast.makeText(view.getContext(), "Intento de carga de URL no segura bloqueado.", Toast.LENGTH_SHORT).show();
+                    return true; // Evita cargar la URL
+                }
+            }
 
-        // Configura otras opciones de seguridad
-        webView.getSettings().setAllowFileAccess(false);
-        webView.getSettings().setAllowContentAccess(false);
-        webView.getSettings().setDomStorageEnabled(false);
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                // Maneja errores de carga, si es necesario
+                Toast.makeText(view.getContext(), "Error al cargar la página.", Toast.LENGTH_SHORT).show();
+            }
+        });
 
+        // Configura las opciones de seguridad del WebView
+        webView.getSettings().setJavaScriptEnabled(true); // Activar JavaScript solo si es absolutamente necesario
+        webView.getSettings().setAllowFileAccess(false); // Desactivar acceso a archivos locales
+        webView.getSettings().setAllowContentAccess(false); // Desactivar acceso al contenido
+        webView.getSettings().setDomStorageEnabled(false); // Desactivar almacenamiento DOM
+
+        // Obtener la URL de redirección de los extras del Intent
         String redirectUrl = getIntent().getStringExtra("redirect_url");
         if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            loadUrlSafely(redirectUrl);
+            loadUrlSafely(redirectUrl); // Carga la URL de redirección de forma segura
         } else {
-            // Carga una URL de forma segura
-            loadUrlSafely(initialUrl);
+            loadUrlSafely(initialUrl); // Carga la URL inicial de forma segura
         }
     }
 
     private void loadUrlSafely(String url) {
-        // Sanitiza la URL antes de cargarla
-        if (url != null && (url.startsWith("https://") || url.startsWith("http://"))) {
-            webView.loadUrl(url);
+        // Verifica que la URL sea válida y segura antes de cargarla
+        if (url != null && url.startsWith("https://distribucionesjoaquininfante.es/")) {
+            webView.loadUrl(url); // Carga la URL en el WebView
         } else {
-            // Maneja el caso de una URL no válida
-            // Por ejemplo, muestra un mensaje de error al usuario
+            // Muestra un mensaje de error si la URL no es válida o segura
+            Toast.makeText(this, "URL no válida o no segura", Toast.LENGTH_SHORT).show();
         }
     }
     @Override
